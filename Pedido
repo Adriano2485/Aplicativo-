@@ -1,144 +1,93 @@
 import 'package:flutter/material.dart';
 
-void main() => runApp(StockManagerApp());
+void main() {
+  runApp(MyApp());
+}
 
-class StockManagerApp extends StatelessWidget {
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Gestão de Estoque',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: ProductListScreen(),
+      title: 'Cálculo de Pedido',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: PedidoScreen(),
     );
   }
 }
 
-class ProductListScreen extends StatefulWidget {
+class PedidoScreen extends StatefulWidget {
   @override
-  _ProductListScreenState createState() => _ProductListScreenState();
+  _PedidoScreenState createState() => _PedidoScreenState();
 }
 
-class _ProductListScreenState extends State<ProductListScreen> {
-  final List<Map<String, dynamic>> products = [
-    {"name": "Pão Francês", "maxStock": 100, "dailySale": 10, "deliveryInterval": 2, "currentStock": 50},
-    {"name": "Pão de Queijo", "maxStock": 80, "dailySale": 8, "deliveryInterval": 3, "currentStock": 30},
-    {"name": "Biscoito de Queijo", "maxStock": 60, "dailySale": 5, "deliveryInterval": 4, "currentStock": 20},
-  ];
+class _PedidoScreenState extends State<PedidoScreen> {
+  final _estoqueMaxController = TextEditingController();
+  final _vendaDiariaController = TextEditingController();
+  final _intervaloEntregaController = TextEditingController();
+  final _estoqueAtualController = TextEditingController();
+  String _resultado = '';
 
-  void calculateOrder() {
+  void _calcularPedido() {
+    final estoqueMax = int.tryParse(_estoqueMaxController.text) ?? 0;
+    final vendaDiaria = int.tryParse(_vendaDiariaController.text) ?? 0;
+    final intervaloEntrega = int.tryParse(_intervaloEntregaController.text) ?? 0;
+    final estoqueAtual = int.tryParse(_estoqueAtualController.text) ?? 0;
+
+    // Lógica para calcular o pedido
+    int pedido;
+    if (estoqueAtual < vendaDiaria * intervaloEntrega) {
+      pedido = estoqueMax;
+    } else {
+      pedido = (vendaDiaria * intervaloEntrega) + (estoqueMax - estoqueAtual);
+    }
+
     setState(() {
-      for (var product in products) {
-        int dailySale = product['dailySale'];
-        int deliveryInterval = product['deliveryInterval'];
-        int currentStock = product['currentStock'];
-        int maxStock = product['maxStock'];
-
-        int requiredStock = dailySale * deliveryInterval;
-        if (currentStock < requiredStock) {
-          product['order'] = maxStock; // Estoque insuficiente: pedir o máximo.
-        } else {
-          product['order'] = requiredStock + (maxStock - currentStock);
-        }
-      }
+      _resultado = 'Pedido Necessário: $pedido';
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Gestão de Estoque")),
-      body: ListView.builder(
-        itemCount: products.length,
-        itemBuilder: (context, index) {
-          var product = products[index];
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product['name'],
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(labelText: "Estoque Máximo"),
-                          keyboardType: TextInputType.number,
-                          onChanged: (value) {
-                            setState(() {
-                              product['maxStock'] = int.tryParse(value) ?? 0;
-                            });
-                          },
-                          controller: TextEditingController(
-                              text: product['maxStock'].toString()),
-                        ),
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(labelText: "Venda Diária"),
-                          keyboardType: TextInputType.number,
-                          onChanged: (value) {
-                            setState(() {
-                              product['dailySale'] = int.tryParse(value) ?? 0;
-                            });
-                          },
-                          controller: TextEditingController(
-                              text: product['dailySale'].toString()),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(labelText: "Intervalo de Entrega (dias)"),
-                          keyboardType: TextInputType.number,
-                          onChanged: (value) {
-                            setState(() {
-                              product['deliveryInterval'] = int.tryParse(value) ?? 0;
-                            });
-                          },
-                          controller: TextEditingController(
-                              text: product['deliveryInterval'].toString()),
-                        ),
-                      ),
-                      SizedBox(width: 10),
-                      Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(labelText: "Estoque Atual"),
-                          keyboardType: TextInputType.number,
-                          onChanged: (value) {
-                            setState(() {
-                              product['currentStock'] = int.tryParse(value) ?? 0;
-                            });
-                          },
-                          controller: TextEditingController(
-                              text: product['currentStock'].toString()),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    "Pedido Necessário: ${product['order'] ?? '-'}",
-                    style: TextStyle(fontSize: 16, color: Colors.green),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+      appBar: AppBar(
+        title: Text('Cálculo de Pedido'),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: calculateOrder,
-        child: Icon(Icons.calculate),
-        tooltip: "Calcular Pedido",
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _estoqueMaxController,
+              decoration: InputDecoration(labelText: 'Estoque Máximo'),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: _vendaDiariaController,
+              decoration: InputDecoration(labelText: 'Venda Diária'),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: _intervaloEntregaController,
+              decoration: InputDecoration(labelText: 'Intervalo de Entrega (dias)'),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: _estoqueAtualController,
+              decoration: InputDecoration(labelText: 'Estoque Atual'),
+              keyboardType: TextInputType.number,
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _calcularPedido,
+              child: Text('Calcular Pedido'),
+            ),
+            SizedBox(height: 20),
+            Text(_resultado, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
     );
   }
